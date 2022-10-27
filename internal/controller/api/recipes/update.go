@@ -3,40 +3,30 @@ package recipes
 import (
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/indeedhat/recipe-api/internal/repo"
 )
 
 type updateRecipeRequest struct {
-	Title            string `binding:"required" json:"Title"`
-	Description      string `binding:"required" json:"Description"`
-	ShortDescription string `binding:"required" json:"ShortDescription"`
-	Ingredients      string `binding:"required" json:"Ingredients"`
-	Steps            string `binding:"required" json:"Steps"`
+	Title       string           `binding:"required" json:"Title"`
+	Description string           `binding:"required" json:"Description"`
+	CookTime    time.Duration    `binding:"required" json:"CookTime"`
+	PrepTime    time.Duration    `binding:"required" json:"PrepTime"`
+	Ingredients repo.Ingredients `binding:"required" json:"Ingredients"`
+	Steps       repo.RecipeSteps `binding:"required" json:"Steps"`
 }
 
 // Update updates an existing recipe in the database
 func (c RecipeController) Update(ctx *gin.Context) {
 	var (
-		input       updateRecipeRequest
-		ingredients repo.Ingredients
-		steps       repo.RecipeSteps
-		slug        = ctx.Param("slug")
+		input updateRecipeRequest
+		slug  = ctx.Param("slug")
 	)
 
 	if err := ctx.BindJSON(&input); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, errors.New("Bad Input"))
-		return
-	}
-
-	if err := ingredients.Scan(input.Ingredients); err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, errors.New("Bad Ingredients"))
-		return
-	}
-
-	if err := steps.Scan(input.Ingredients); err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, errors.New("Bad Steps"))
 		return
 	}
 
@@ -48,9 +38,10 @@ func (c RecipeController) Update(ctx *gin.Context) {
 
 	existing.Title = input.Title
 	existing.Description = input.Description
-	existing.ShortDescription = input.ShortDescription
-	existing.Ingredients = ingredients
-	existing.Steps = steps
+	existing.CookTime = input.CookTime
+	existing.PrepTime = input.PrepTime
+	existing.Ingredients = input.Ingredients
+	existing.Steps = input.Steps
 
 	if err := c.recipeRepo.Create(ctx, existing); err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, errors.New("Create failed"))

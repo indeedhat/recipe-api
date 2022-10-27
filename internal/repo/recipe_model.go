@@ -14,11 +14,12 @@ import (
 type Recipe struct {
 	juniper.Model
 
-	Slug             string `gorm:"uniqueIndex"`
-	Title            string
-	Description      string
-	ShortDescription string
-	Image            string
+	Slug        string `gorm:"uniqueIndex"`
+	Title       string
+	Description string `gorm:"type:text"`
+	Image       string
+	PrepTime    time.Duration
+	CookTime    time.Duration
 
 	Ingredients Ingredients
 	Steps       RecipeSteps
@@ -39,7 +40,7 @@ func (i *Ingredients) Scan(src any) error {
 }
 
 // Value implements driver.Valuer
-func (i *Ingredients) Value() (driver.Value, error) {
+func (i Ingredients) Value() (driver.Value, error) {
 	val, err := json.Marshal(i)
 	return string(val), err
 
@@ -50,7 +51,7 @@ var _ driver.Valuer = (*Ingredients)(nil)
 
 type Ingredient struct {
 	Amount string
-	Text   string
+	Name   string
 }
 
 type RecipeSteps []RecipeStep
@@ -68,7 +69,7 @@ func (r *RecipeSteps) Scan(src any) error {
 }
 
 // Value implements driver.Valuer
-func (r *RecipeSteps) Value() (driver.Value, error) {
+func (r RecipeSteps) Value() (driver.Value, error) {
 	val, err := json.Marshal(r)
 	return string(val), err
 
